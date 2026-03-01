@@ -13,12 +13,17 @@ jobs:
           - os: windows-latest
             platform: windows/amd64
             output: atur.exe
+            asset_name: atur-windows-amd64.exe
+
           - os: macos-latest
             platform: darwin/amd64
             output: atur
+            asset_name: atur-macos-amd64
+
           - os: ubuntu-latest
             platform: linux/amd64
             output: atur
+            asset_name: atur-linux-amd64
 
     runs-on: ${{ matrix.os }}
 
@@ -41,23 +46,53 @@ jobs:
       - name: Build
         run: wails build -platform ${{ matrix.platform }} -o ${{ matrix.output }}
 
+      - name: Ekstrak dari arsip (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd build/bin
+          $zip = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath . -Force
+        shell: pwsh
+
+      - name: Ekstrak dari arsip (macOS & Linux)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd build/bin
+          tar -xzf *.tar.gz || true
+
+      - name: Rename binary
+        run: |
+          mv build/bin/${{ matrix.output }} build/bin/${{ matrix.asset_name }}
+        shell: bash
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: atur-${{ matrix.os }}
-          path: build/bin/${{ matrix.output }}
+          name: ${{ matrix.asset_name }}
+          path: build/bin/${{ matrix.asset_name }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
 
-      - name: Create Release
+      - name: Buat Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            atur-windows-latest/atur.exe
-            atur-macos-latest/atur
-            atur-ubuntu-latest/atur
+          files: artifacts/*
           generate_release_notes: true
+          body: |
+            ## Download
+
+            | Platform | File |
+            |----------|------|
+            | Windows  | `atur-windows-amd64.exe` — langsung klik untuk menjalankan |
+            | macOS    | `atur-macos-amd64` — klik kanan → Open |
+            | Linux    | `atur-linux-amd64` — `chmod +x atur-linux-amd64` lalu jalankan |
