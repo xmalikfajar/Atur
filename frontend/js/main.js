@@ -48,9 +48,24 @@ function bindEvents() {
     tab.addEventListener("click", () => switchSidebarTab(tab.dataset.tab));
   });
 
-  // Tab request (Headers / Body)
+  // Tab request (Headers / Body / Auth)
   document.querySelectorAll(".req-tab").forEach((tab) => {
     tab.addEventListener("click", () => switchRequestTab(tab.dataset.tab));
+  });
+
+  // Selector tipe auth
+  document.querySelectorAll('input[name="auth-type"]').forEach((radio) => {
+    radio.addEventListener("change", () => switchAuthType(radio.value));
+  });
+
+  // Toggle show/hide password di Basic Auth
+  document.getElementById("btn-toggle-pass").addEventListener("click", () => {
+    const passInput = document.getElementById("auth-basic-pass");
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+    document.getElementById("btn-toggle-pass").textContent = isHidden
+      ? "🙈"
+      : "👁";
   });
 
   // Tab response (Body / Headers)
@@ -106,6 +121,11 @@ async function handleSend() {
   }
 
   const headers = collectKVRows("headers-list");
+
+  // Inject auth headers (merge ke headers, auth override jika ada konflik)
+  const authHeaders = collectAuthHeaders();
+  Object.assign(headers, authHeaders);
+
   const bodyType = document.querySelector(
     'input[name="body-type"]:checked',
   ).value;
@@ -186,6 +206,8 @@ export function getDOMState() {
   const url = document.getElementById("url-input").value;
   const bodyType =
     document.querySelector('input[name="body-type"]:checked')?.value || "none";
+  const authType =
+    document.querySelector('input[name="auth-type"]:checked')?.value || "none";
   const headers = collectKVRows("headers-list");
 
   let body = "";
@@ -199,7 +221,16 @@ export function getDOMState() {
     formFields = collectKVRowsAsFields("urlencoded-list");
   }
 
-  return { method, url, headers, body, bodyType, formFields };
+  const auth = {
+    type: authType,
+    bearerToken: document.getElementById("auth-bearer-token").value,
+    basicUser: document.getElementById("auth-basic-user").value,
+    basicPass: document.getElementById("auth-basic-pass").value,
+    apiKeyName: document.getElementById("auth-apikey-name").value,
+    apiKeyValue: document.getElementById("auth-apikey-value").value,
+  };
+
+  return { method, url, headers, body, bodyType, formFields, auth };
 }
 
 /**
@@ -240,6 +271,22 @@ export function setDOMState(state) {
   // Urlencoded
   document.getElementById("urlencoded-list").innerHTML = "";
 
+  // Auth
+  const auth = state.auth || { type: "none" };
+  const authRadio = document.querySelector(
+    `input[name="auth-type"][value="${auth.type || "none"}"]`,
+  );
+  if (authRadio) {
+    authRadio.checked = true;
+    switchAuthType(auth.type || "none");
+  }
+  document.getElementById("auth-bearer-token").value = auth.bearerToken || "";
+  document.getElementById("auth-basic-user").value = auth.basicUser || "";
+  document.getElementById("auth-basic-pass").value = auth.basicPass || "";
+  document.getElementById("auth-apikey-name").value =
+    auth.apiKeyName || "X-API-Key";
+  document.getElementById("auth-apikey-value").value = auth.apiKeyValue || "";
+
   // Response
   if (state.response) {
     import("./ui.js").then(({ renderResponse }) =>
@@ -269,6 +316,56 @@ function switchRequestTab(tabName) {
     .querySelector(`.req-tab[data-tab="${tabName}"]`)
     .classList.add("active");
   document.getElementById(`req-panel-${tabName}`).classList.add("active");
+}
+
+/**
+ * switchAuthType — Menampilkan sub-panel auth sesuai tipe yang dipilih
+ */
+function switchAuthType(type) {
+  document
+    .querySelectorAll(".auth-panel")
+    .forEach((p) => p.classList.add("hidden"));
+  const panelMap = {
+    bearer: "auth-bearer",
+    basic: "auth-basic",
+    apikey: "auth-apikey",
+  };
+  const panelId = panelMap[type];
+  if (panelId) document.getElementById(panelId).classList.remove("hidden");
+}
+
+/**
+ * collectAuthHeaders — Menghasilkan header sesuai konfigurasi auth aktif
+ * @returns {Object} header key→value untuk di-merge ke request headers
+ */
+function collectAuthHeaders() {
+  const authType =
+    document.querySelector('input[name="auth-type"]:checked')?.value || "none";
+
+  switch (authType) {
+    case "bearer": {
+      const token = document.getElementById("auth-bearer-token").value.trim();
+      if (token) return { Authorization: `Bearer ${token}` };
+      break;
+    }
+    case "basic": {
+      const user = document.getElementById("auth-basic-user").value;
+      const pass = document.getElementById("auth-basic-pass").value;
+      if (user || pass) {
+        // Encode ke base64 — standar HTTP Basic Auth (RFC 7617)
+        const encoded = btoa(unescape(encodeURIComponent(`${user}:${pass}`)));
+        return { Authorization: `Basic ${encoded}` };
+      }
+      break;
+    }
+    case "apikey": {
+      const name = document.getElementById("auth-apikey-name").value.trim();
+      const value = document.getElementById("auth-apikey-value").value.trim();
+      if (name && value) return { [name]: value };
+      break;
+    }
+  }
+  return {};
 }
 
 function switchResponseTab(tabName) {

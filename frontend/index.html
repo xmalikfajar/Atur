@@ -74,10 +74,11 @@
             <button id="btn-send">Kirim</button>
           </div>
 
-          <!-- Tab request: Headers, Body -->
+          <!-- Tab request: Headers, Body, Auth -->
           <div id="request-tabs">
             <button class="req-tab active" data-tab="headers">Headers</button>
             <button class="req-tab" data-tab="body">Body</button>
+            <button class="req-tab" data-tab="auth">Auth</button>
           </div>
 
           <!-- Panel Headers -->
@@ -136,6 +137,104 @@
                 <button id="btn-add-urlencoded-field">+ Tambah Field</button>
               </div>
               <div id="urlencoded-list" class="kv-list"></div>
+            </div>
+          </div>
+
+          <!-- Panel Auth -->
+          <div id="req-panel-auth" class="req-panel">
+            <div id="auth-type-selector">
+              <label
+                ><input type="radio" name="auth-type" value="none" checked /> No
+                Auth</label
+              >
+              <label
+                ><input type="radio" name="auth-type" value="bearer" /> Bearer
+                Token</label
+              >
+              <label
+                ><input type="radio" name="auth-type" value="basic" /> Basic
+                Auth</label
+              >
+              <label
+                ><input type="radio" name="auth-type" value="apikey" /> API
+                Key</label
+              >
+            </div>
+
+            <!-- Bearer Token -->
+            <div id="auth-bearer" class="auth-panel hidden">
+              <div class="auth-field">
+                <label class="auth-label">Token</label>
+                <input
+                  id="auth-bearer-token"
+                  type="text"
+                  class="auth-input"
+                  placeholder="eyJhbGci..."
+                />
+              </div>
+              <p class="auth-hint">
+                Menambahkan header:
+                <code>Authorization: Bearer &lt;token&gt;</code>
+              </p>
+            </div>
+
+            <!-- Basic Auth -->
+            <div id="auth-basic" class="auth-panel hidden">
+              <div class="auth-field">
+                <label class="auth-label">Username</label>
+                <input
+                  id="auth-basic-user"
+                  type="text"
+                  class="auth-input"
+                  placeholder="username"
+                />
+              </div>
+              <div class="auth-field">
+                <label class="auth-label">Password</label>
+                <input
+                  id="auth-basic-pass"
+                  type="password"
+                  class="auth-input"
+                  placeholder="password"
+                />
+                <button
+                  id="btn-toggle-pass"
+                  class="btn-toggle-pass"
+                  title="Tampilkan password"
+                >
+                  👁
+                </button>
+              </div>
+              <p class="auth-hint">
+                Menambahkan header:
+                <code>Authorization: Basic &lt;base64(user:pass)&gt;</code>
+              </p>
+            </div>
+
+            <!-- API Key -->
+            <div id="auth-apikey" class="auth-panel hidden">
+              <div class="auth-field">
+                <label class="auth-label">Header Name</label>
+                <input
+                  id="auth-apikey-name"
+                  type="text"
+                  class="auth-input"
+                  placeholder="X-API-Key"
+                  value="X-API-Key"
+                />
+              </div>
+              <div class="auth-field">
+                <label class="auth-label">Value</label>
+                <input
+                  id="auth-apikey-value"
+                  type="text"
+                  class="auth-input"
+                  placeholder="api-key-value"
+                />
+              </div>
+              <p class="auth-hint">
+                Menambahkan header kustom dengan nama dan nilai yang ditentukan.
+              </p>
             </div>
           </div>
         </section>

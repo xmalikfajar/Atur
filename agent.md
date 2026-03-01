@@ -79,7 +79,7 @@ atur/
 
 ### Phase 3 — Advanced
 
-- [ ] Auth helper: Bearer Token, Basic Auth, API Key
+- [x] Auth helper: Bearer Token, Basic Auth, API Key
 - [ ] Export request ke curl command
 - [ ] Import dari curl command
 - [ ] Export/import koleksi (format JSON)
