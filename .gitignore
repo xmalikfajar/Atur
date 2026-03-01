@@ -1,0 +1,63 @@
+# =========================
+# Wails
+# =========================
+build/bin/
+build/darwin/
+build/windows/
+build/linux/
+
+# =========================
+# Go
+# =========================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# =========================
+# Frontend
+# =========================
+frontend/node_modules/
+frontend/dist/
+
+# =========================
+# Environment & Secrets
+# =========================
+.env
+.env.local
+.env.*.local
+
+# =========================
+# Editor & OS
+# =========================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# =========================
+# Log & Temp
+# =========================
+*.log
+tmp/
+temp/

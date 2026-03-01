@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atur — API Client</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Sidebar kiri: koleksi & history -->
+      <aside id="sidebar">
+        <div id="sidebar-header">
+          <span class="app-title">Atur</span>
+          <div id="sidebar-tabs">
+            <button class="sidebar-tab active" data-tab="collections">
+              Koleksi
+            </button>
+            <button class="sidebar-tab" data-tab="history">History</button>
+          </div>
+        </div>
+
+        <!-- Panel Koleksi -->
+        <div id="panel-collections" class="sidebar-panel active">
+          <div class="panel-toolbar">
+            <button id="btn-new-collection" title="Koleksi Baru">
+              + Koleksi
+            </button>
+          </div>
+          <ul id="collection-list"></ul>
+        </div>
+
+        <!-- Panel History -->
+        <div id="panel-history" class="sidebar-panel">
+          <div class="panel-toolbar">
+            <button id="btn-clear-history" title="Hapus Semua History">
+              Hapus Semua
+            </button>
+          </div>
+          <ul id="history-list"></ul>
+        </div>
+      </aside>
+
+      <!-- Area utama -->
+      <main id="main">
+        <!-- Request builder -->
+        <section id="request-section">
+          <div id="request-bar">
+            <select id="method-select">
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="PATCH">PATCH</option>
+              <option value="DELETE">DELETE</option>
+              <option value="HEAD">HEAD</option>
+              <option value="OPTIONS">OPTIONS</option>
+            </select>
+            <input
+              id="url-input"
+              type="text"
+              placeholder="https://api.example.com/endpoint"
+            />
+            <button id="btn-send">Kirim</button>
+          </div>
+
+          <!-- Tab request: Headers, Body -->
+          <div id="request-tabs">
+            <button class="req-tab active" data-tab="headers">Headers</button>
+            <button class="req-tab" data-tab="body">Body</button>
+          </div>
+
+          <!-- Panel Headers -->
+          <div id="req-panel-headers" class="req-panel active">
+            <div class="kv-toolbar">
+              <button id="btn-add-header">+ Tambah Header</button>
+            </div>
+            <div id="headers-list" class="kv-list"></div>
+          </div>
+
+          <!-- Panel Body -->
+          <div id="req-panel-body" class="req-panel">
+            <div id="body-type-selector">
+              <label
+                ><input type="radio" name="body-type" value="none" checked />
+                None</label
+              >
+              <label
+                ><input type="radio" name="body-type" value="raw" /> Raw</label
+              >
+              <label
+                ><input type="radio" name="body-type" value="form-data" />
+                Form-data</label
+              >
+              <label
+                ><input type="radio" name="body-type" value="urlencoded" />
+                x-www-form-urlencoded</label
+              >
+            </div>
+
+            <!-- Raw body -->
+            <div id="body-raw" class="body-panel">
+              <select id="raw-content-type">
+                <option value="application/json">JSON</option>
+                <option value="text/plain">Text</option>
+                <option value="application/xml">XML</option>
+              </select>
+              <textarea
+                id="raw-body-input"
+                placeholder='{"key": "value"}'
+              ></textarea>
+            </div>
+
+            <!-- Form-data -->
+            <div id="body-form-data" class="body-panel hidden">
+              <div class="kv-toolbar">
+                <button id="btn-add-form-field">+ Tambah Field</button>
+                <button id="btn-add-form-file">+ Tambah File</button>
+              </div>
+              <div id="form-data-list" class="kv-list"></div>
+            </div>
+
+            <!-- URL Encoded -->
+            <div id="body-urlencoded" class="body-panel hidden">
+              <div class="kv-toolbar">
+                <button id="btn-add-urlencoded-field">+ Tambah Field</button>
+              </div>
+              <div id="urlencoded-list" class="kv-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Divider -->
+        <div id="divider"></div>
+
+        <!-- Response viewer -->
+        <section id="response-section">
+          <div id="response-meta" class="hidden">
+            <span id="resp-status" class="badge"></span>
+            <span id="resp-duration" class="meta-item"></span>
+            <span id="resp-size" class="meta-item"></span>
+          </div>
+
+          <div id="response-tabs" class="hidden">
+            <button class="resp-tab active" data-tab="body">Body</button>
+            <button class="resp-tab" data-tab="headers">Headers</button>
+          </div>
+
+          <div id="resp-panel-body" class="resp-panel active">
+            <div id="response-placeholder">
+              <p>Kirim request untuk melihat response di sini.</p>
+            </div>
+            <pre id="response-body" class="hidden"></pre>
+          </div>
+
+          <div id="resp-panel-headers" class="resp-panel hidden">
+            <table id="response-headers-table">
+              <thead>
+                <tr>
+                  <th>Header</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody id="response-headers-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modal: Koleksi Baru -->
+    <div id="modal-collection" class="modal hidden">
+      <div class="modal-box">
+        <h3>Koleksi Baru</h3>
+        <label
+          >Nama Koleksi
+          <input
+            id="collection-name-input"
+            type="text"
+            placeholder="Nama koleksi..."
+          />
+        </label>
+        <div class="modal-actions">
+          <button id="btn-cancel-collection" class="btn-secondary">
+            Batal
+          </button>
+          <button id="btn-save-collection" class="btn-primary">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/main.js" type="module"></script>
+  </body>
+</html>
