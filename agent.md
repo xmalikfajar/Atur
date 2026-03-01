@@ -74,8 +74,8 @@ atur/
 
 - [x] History request (disimpan lokal)
 - [x] Simpan request ke koleksi
-- [ ] Environment variables (`{{base_url}}`, `{{token}}`, dll)
-- [ ] Tab multi-request
+- [x] Environment variables (`{{base_url}}`, `{{token}}`, dll)
+- [x] Tab multi-request
 
 ### Phase 3 — Advanced
 

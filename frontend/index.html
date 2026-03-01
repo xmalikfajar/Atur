@@ -43,6 +43,12 @@
 
       <!-- Area utama -->
       <main id="main">
+        <!-- Tab bar multi-request -->
+        <div id="tab-bar">
+          <div id="tab-list"></div>
+          <button id="btn-new-tab" title="Tab Baru">+</button>
+        </div>
+
         <!-- Request builder -->
         <section id="request-section">
           <div id="request-bar">
@@ -60,6 +66,11 @@
               type="text"
               placeholder="https://api.example.com/endpoint"
             />
+            <!-- Environment selector -->
+            <select id="env-select" title="Pilih Environment">
+              <option value="">— Tanpa Env —</option>
+            </select>
+            <button id="btn-manage-env" title="Kelola Environment">⚙</button>
             <button id="btn-send">Kirim</button>
           </div>
 
@@ -184,6 +195,60 @@
             Batal
           </button>
           <button id="btn-save-collection" class="btn-primary">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Kelola Environment -->
+    <div id="modal-env" class="modal hidden">
+      <div class="modal-box modal-box-wide">
+        <div class="modal-env-layout">
+          <!-- Kiri: daftar environment -->
+          <div class="env-list-col">
+            <h3>Environment</h3>
+            <ul id="env-list"></ul>
+            <button id="btn-add-env" class="btn-secondary env-add-btn">
+              + Baru
+            </button>
+          </div>
+          <!-- Kanan: editor variables -->
+          <div class="env-editor-col">
+            <div id="env-editor-empty" class="env-editor-placeholder">
+              <p>Pilih environment untuk mengedit variabel</p>
+            </div>
+            <div id="env-editor" class="hidden">
+              <div class="env-editor-header">
+                <input
+                  id="env-name-input"
+                  type="text"
+                  placeholder="Nama environment..."
+                  class="env-name-input"
+                />
+                <button
+                  id="btn-delete-env"
+                  class="btn-danger"
+                  title="Hapus environment ini"
+                >
+                  Hapus
+                </button>
+              </div>
+              <div class="kv-toolbar">
+                <span class="kv-col-label">Variable</span>
+                <span class="kv-col-label">Value</span>
+              </div>
+              <div id="env-vars-list" class="kv-list"></div>
+              <button
+                id="btn-add-env-var"
+                class="btn-secondary env-add-var-btn"
+              >
+                + Tambah Variable
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-cancel-env" class="btn-secondary">Tutup</button>
+          <button id="btn-save-env" class="btn-primary">Simpan</button>
         </div>
       </div>
     </div>

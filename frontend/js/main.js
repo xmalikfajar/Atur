@@ -5,14 +5,24 @@
 
 import { initUI, switchSidebarTab } from "./ui.js";
 import { sendRequest } from "./request.js";
-import { initCollection } from "./collection.js";
+import { initCollection, getActiveEnvVars } from "./collection.js";
 import { OpenFileDialog } from "../wailsjs/go/main/App.js";
+import {
+  initTabs,
+  createTab,
+  updateActiveTabTitle,
+  saveResponseToActiveTab,
+} from "./tabs.js";
 
 // Inisialisasi saat DOM siap
 document.addEventListener("DOMContentLoaded", () => {
   initUI();
   initCollection();
   bindEvents();
+  initTabs({
+    getState: getDOMState,
+    setState: setDOMState,
+  });
 });
 
 /**
@@ -20,8 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 function bindEvents() {
   // Tombol kirim request
-  const btnSend = document.getElementById("btn-send");
-  btnSend.addEventListener("click", handleSend);
+  document.getElementById("btn-send").addEventListener("click", handleSend);
 
   // Kirim dengan Enter di URL input
   const urlInput = document.getElementById("url-input");
@@ -29,32 +38,29 @@ function bindEvents() {
     if (e.key === "Enter") handleSend();
   });
 
+  // Update judul tab saat URL berubah
+  urlInput.addEventListener("input", () => {
+    updateActiveTabTitle(urlInput.value.trim() || "New Request");
+  });
+
   // Tab sidebar
   document.querySelectorAll(".sidebar-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      switchSidebarTab(tab.dataset.tab);
-    });
+    tab.addEventListener("click", () => switchSidebarTab(tab.dataset.tab));
   });
 
   // Tab request (Headers / Body)
   document.querySelectorAll(".req-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      switchRequestTab(tab.dataset.tab);
-    });
+    tab.addEventListener("click", () => switchRequestTab(tab.dataset.tab));
   });
 
   // Tab response (Body / Headers)
   document.querySelectorAll(".resp-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      switchResponseTab(tab.dataset.tab);
-    });
+    tab.addEventListener("click", () => switchResponseTab(tab.dataset.tab));
   });
 
   // Selector tipe body
   document.querySelectorAll('input[name="body-type"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-      switchBodyType(radio.value);
-    });
+    radio.addEventListener("change", () => switchBodyType(radio.value));
   });
 
   // Tombol tambah header
@@ -109,7 +115,6 @@ async function handleSend() {
 
   if (bodyType === "raw") {
     body = document.getElementById("raw-body-input").value;
-    // Set Content-Type dari selector jika belum ada di headers
     const rawCT = document.getElementById("raw-content-type").value;
     if (!headers["Content-Type"] && !headers["content-type"]) {
       headers["Content-Type"] = rawCT;
@@ -120,10 +125,10 @@ async function handleSend() {
     formFields = collectKVRowsAsFields("urlencoded-list");
   }
 
-  const payload = { method, url, headers, body, bodyType, formFields };
+  // Ambil environment variables yang aktif
+  const envVars = getActiveEnvVars();
 
-  // Debug: log payload sebelum dikirim
-  console.log("[Atur] Payload:", JSON.stringify(payload, null, 2));
+  const payload = { method, url, headers, body, bodyType, formFields, envVars };
 
   // Tampilkan loading
   const btnSend = document.getElementById("btn-send");
@@ -134,6 +139,9 @@ async function handleSend() {
 
   btnSend.disabled = false;
   btnSend.textContent = "Kirim";
+
+  // Simpan response ke state tab aktif
+  saveResponseToActiveTab(response);
 
   // Tampilkan response
   const { renderResponse } = await import("./ui.js");
@@ -167,9 +175,89 @@ async function handleClearHistory() {
   }
 }
 
+// ===== State DOM untuk Tab System =====
+
 /**
- * switchRequestTab — Mengganti tab aktif di request builder
+ * getDOMState — Membaca state request saat ini dari DOM
+ * @returns {Object} state lengkap tab
  */
+export function getDOMState() {
+  const method = document.getElementById("method-select").value;
+  const url = document.getElementById("url-input").value;
+  const bodyType =
+    document.querySelector('input[name="body-type"]:checked')?.value || "none";
+  const headers = collectKVRows("headers-list");
+
+  let body = "";
+  let formFields = [];
+
+  if (bodyType === "raw") {
+    body = document.getElementById("raw-body-input").value;
+  } else if (bodyType === "form-data") {
+    formFields = collectFormDataRows("form-data-list");
+  } else if (bodyType === "urlencoded") {
+    formFields = collectKVRowsAsFields("urlencoded-list");
+  }
+
+  return { method, url, headers, body, bodyType, formFields };
+}
+
+/**
+ * setDOMState — Menulis state ke DOM (saat pindah tab)
+ * @param {Object} state
+ */
+export function setDOMState(state) {
+  if (!state) return;
+
+  document.getElementById("method-select").value = state.method || "GET";
+  document.getElementById("url-input").value = state.url || "";
+
+  // Headers
+  document.getElementById("headers-list").innerHTML = "";
+  Object.entries(state.headers || {}).forEach(([k, v]) =>
+    addKVRow("headers-list", k, v),
+  );
+
+  // Body type
+  const radio = document.querySelector(
+    `input[name="body-type"][value="${state.bodyType || "none"}"]`,
+  );
+  if (radio) {
+    radio.checked = true;
+    switchBodyType(state.bodyType || "none");
+  }
+
+  // Raw body
+  document.getElementById("raw-body-input").value = state.body || "";
+
+  // Form-data
+  document.getElementById("form-data-list").innerHTML = "";
+  (state.formFields || []).forEach((f) => {
+    if (f.isFile) addFileRow("form-data-list", f.key, f.filePath);
+    else addKVRow("form-data-list", f.key, f.value);
+  });
+
+  // Urlencoded
+  document.getElementById("urlencoded-list").innerHTML = "";
+
+  // Response
+  if (state.response) {
+    import("./ui.js").then(({ renderResponse }) =>
+      renderResponse(state.response),
+    );
+  } else {
+    // Reset response area
+    document.getElementById("response-meta").classList.add("hidden");
+    document.getElementById("response-tabs").classList.add("hidden");
+    document.getElementById("response-placeholder").classList.remove("hidden");
+    document.getElementById("response-body").classList.add("hidden");
+    document.getElementById("response-body").textContent = "";
+    document.getElementById("response-headers-body").innerHTML = "";
+  }
+}
+
+// ===== Tab Switching =====
+
 function switchRequestTab(tabName) {
   document
     .querySelectorAll(".req-tab")
@@ -177,16 +265,12 @@ function switchRequestTab(tabName) {
   document
     .querySelectorAll(".req-panel")
     .forEach((p) => p.classList.remove("active"));
-
   document
     .querySelector(`.req-tab[data-tab="${tabName}"]`)
     .classList.add("active");
   document.getElementById(`req-panel-${tabName}`).classList.add("active");
 }
 
-/**
- * switchResponseTab — Mengganti tab aktif di response viewer
- */
 function switchResponseTab(tabName) {
   document
     .querySelectorAll(".resp-tab")
@@ -195,7 +279,6 @@ function switchResponseTab(tabName) {
     p.classList.remove("active");
     p.classList.add("hidden");
   });
-
   document
     .querySelector(`.resp-tab[data-tab="${tabName}"]`)
     .classList.add("active");
@@ -204,9 +287,6 @@ function switchResponseTab(tabName) {
   panel.classList.add("active");
 }
 
-/**
- * switchBodyType — Menampilkan panel body sesuai tipe yang dipilih
- */
 function switchBodyType(type) {
   document
     .querySelectorAll(".body-panel")
@@ -221,6 +301,8 @@ function switchBodyType(type) {
     if (panelId) document.getElementById(panelId).classList.remove("hidden");
   }
 }
+
+// ===== Key-Value Helpers =====
 
 /**
  * addKVRow — Menambahkan baris key-value ke dalam container
@@ -241,8 +323,7 @@ export function addKVRow(containerId, key = "", value = "") {
 }
 
 /**
- * addFileRow — Menambahkan baris file upload ke dalam container
- * Dilengkapi tombol Browse untuk memilih file via OS dialog
+ * addFileRow — Menambahkan baris file upload dengan tombol Browse
  */
 export function addFileRow(containerId, key = "", filePath = "") {
   const container = document.getElementById(containerId);
@@ -314,7 +395,6 @@ function collectFormDataRows(containerId) {
     if (!key) return;
 
     if (isFile) {
-      // Baca path dari input khusus file
       const filePathEl = row.querySelector(".kv-file-path");
       const filePath = filePathEl ? filePathEl.value.trim() : "";
       fields.push({ key, value: "", isFile: true, filePath });
