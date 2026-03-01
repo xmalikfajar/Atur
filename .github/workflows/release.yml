@@ -3,39 +3,55 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            platform: windows/amd64
-            output: atur.exe
-            asset_name: atur-windows-amd64.exe
+        build:
+          - name: 'atur'
+            platform: 'linux/amd64'
+            os: 'ubuntu-22.04'
+            asset_name: 'atur-linux-amd64'
 
-          - os: macos-latest
-            platform: darwin/amd64
-            output: atur
-            asset_name: atur-macos-amd64
+          - name: 'atur'
+            platform: 'windows/amd64'
+            os: 'windows-latest'
+            asset_name: 'atur-windows-amd64.exe'
 
-          - os: ubuntu-22.04
-            platform: linux/amd64
-            output: atur
-            asset_name: atur-linux-amd64
+          - name: 'atur'
+            platform: 'darwin/universal'
+            os: 'macos-latest'
+            asset_name: 'atur-macos-universal'
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.build.os }}
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          go-version: "1.21"
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-22.04'
+        if: matrix.build.os == 'ubuntu-22.04'
         run: |
           sudo apt update
           sudo apt install -y \
@@ -44,36 +60,20 @@ jobs:
             build-essential \
             pkg-config
 
-      - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      - name: Build (Linux & macOS)
+        if: matrix.build.os != 'windows-latest'
+        run: wails build -platform ${{ matrix.build.platform }} -o ${{ matrix.build.asset_name }}
 
-      - name: Build
-        run: wails build -platform ${{ matrix.platform }} -o ${{ matrix.output }}
-
-      - name: Ekstrak dari arsip (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          cd build/bin
-          $zip = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
-          Expand-Archive -Path $zip.FullName -DestinationPath . -Force
+      - name: Build (Windows)
+        if: matrix.build.os == 'windows-latest'
+        run: wails build -platform ${{ matrix.build.platform }} -o ${{ matrix.build.asset_name }}
         shell: pwsh
-
-      - name: Ekstrak dari arsip (macOS & Linux)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd build/bin
-          tar -xzf *.tar.gz || true
-
-      - name: Rename binary
-        run: |
-          mv build/bin/${{ matrix.output }} build/bin/${{ matrix.asset_name }}
-        shell: bash
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: build/bin/${{ matrix.asset_name }}
+          name: ${{ matrix.build.asset_name }}
+          path: build/bin/${{ matrix.build.asset_name }}
 
   release:
     needs: build
@@ -98,5 +98,5 @@ jobs:
             | Platform | File |
             |----------|------|
             | Windows  | `atur-windows-amd64.exe` — langsung klik untuk menjalankan |
-            | macOS    | `atur-macos-amd64` — klik kanan → Open |
+            | macOS    | `atur-macos-universal` — klik kanan → Open |
             | Linux    | `atur-linux-amd64` — `chmod +x atur-linux-amd64` lalu jalankan |
