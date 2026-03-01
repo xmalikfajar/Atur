@@ -6,6 +6,7 @@
 import { initUI, switchSidebarTab } from "./ui.js";
 import { sendRequest } from "./request.js";
 import { initCollection } from "./collection.js";
+import { OpenFileDialog } from "../wailsjs/go/main/App.js";
 
 // Inisialisasi saat DOM siap
 document.addEventListener("DOMContentLoaded", () => {
@@ -120,6 +121,9 @@ async function handleSend() {
   }
 
   const payload = { method, url, headers, body, bodyType, formFields };
+
+  // Debug: log payload sebelum dikirim
+  console.log("[Atur] Payload:", JSON.stringify(payload, null, 2));
 
   // Tampilkan loading
   const btnSend = document.getElementById("btn-send");
@@ -238,6 +242,7 @@ export function addKVRow(containerId, key = "", value = "") {
 
 /**
  * addFileRow — Menambahkan baris file upload ke dalam container
+ * Dilengkapi tombol Browse untuk memilih file via OS dialog
  */
 export function addFileRow(containerId, key = "", filePath = "") {
   const container = document.getElementById(containerId);
@@ -246,9 +251,25 @@ export function addFileRow(containerId, key = "", filePath = "") {
   row.dataset.isFile = "true";
   row.innerHTML = `
     <input type="text" class="kv-key" placeholder="Key" value="${escapeAttr(key)}" />
-    <input type="text" class="kv-file-path kv-value" placeholder="Path file (contoh: /home/user/file.pdf)" value="${escapeAttr(filePath)}" />
+    <div class="file-input-group">
+      <input type="text" class="kv-file-path kv-value" placeholder="Klik Browse untuk pilih file..." value="${escapeAttr(filePath)}" readonly />
+      <button class="btn-browse" title="Pilih file">Browse</button>
+    </div>
     <button class="btn-remove" title="Hapus">×</button>
   `;
+
+  // Tombol Browse → buka OS file picker via Wails
+  row.querySelector(".btn-browse").addEventListener("click", async () => {
+    try {
+      const selectedPath = await OpenFileDialog();
+      if (selectedPath) {
+        row.querySelector(".kv-file-path").value = selectedPath;
+      }
+    } catch (err) {
+      console.error("Gagal membuka file dialog:", err);
+    }
+  });
+
   row
     .querySelector(".btn-remove")
     .addEventListener("click", () => row.remove());
@@ -289,14 +310,17 @@ function collectFormDataRows(containerId) {
   document.querySelectorAll(`#${containerId} .kv-row`).forEach((row) => {
     const key = row.querySelector(".kv-key").value.trim();
     const isFile = row.dataset.isFile === "true";
-    const value = row.querySelector(".kv-value").value.trim();
-    if (key) {
-      fields.push({
-        key,
-        value: isFile ? "" : value,
-        isFile,
-        filePath: isFile ? value : "",
-      });
+
+    if (!key) return;
+
+    if (isFile) {
+      // Baca path dari input khusus file
+      const filePathEl = row.querySelector(".kv-file-path");
+      const filePath = filePathEl ? filePathEl.value.trim() : "";
+      fields.push({ key, value: "", isFile: true, filePath });
+    } else {
+      const value = row.querySelector(".kv-value").value.trim();
+      fields.push({ key, value, isFile: false, filePath: "" });
     }
   });
   return fields;

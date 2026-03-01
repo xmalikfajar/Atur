@@ -16,6 +16,8 @@ export function GetEnvironments():Promise<Array<collection.Environment>>;
 
 export function GetHistory():Promise<Array<history.HistoryItem>>;
 
+export function OpenFileDialog():Promise<string>;
+
 export function SaveCollection(arg1:collection.Collection):Promise<void>;
 
 export function SaveEnvironment(arg1:collection.Environment):Promise<void>;

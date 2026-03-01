@@ -6,6 +6,8 @@ import (
 	"atur/internal/collection"
 	"atur/internal/history"
 	"atur/internal/requester"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App adalah struct utama yang di-bind ke frontend Wails
@@ -25,9 +27,25 @@ func (a *App) startup(ctx context.Context) {
 
 // --- Request ---
 
-// SendRequest mengirim HTTP request dan mengembalikan response
+// SendRequest mengirim HTTP request dan mengembalikan response.
+// Sebelum dikirim, variabel environment di-substitusi ke URL, headers, dan body.
 func (a *App) SendRequest(payload requester.RequestPayload) requester.Response {
+	// Substitusi environment variables jika ada
+	if len(payload.EnvVars) > 0 {
+		payload = requester.SubstituteEnv(payload)
+	}
 	return requester.Send(payload)
+}
+
+// OpenFileDialog membuka dialog pemilihan file native OS dan mengembalikan path file yang dipilih
+func (a *App) OpenFileDialog() (string, error) {
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Pilih File",
+	})
+	if err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 // --- History ---

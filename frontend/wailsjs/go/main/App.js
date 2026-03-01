@@ -26,6 +26,10 @@ export function GetHistory() {
   return window['go']['main']['App']['GetHistory']();
 }
 
+export function OpenFileDialog() {
+  return window['go']['main']['App']['OpenFileDialog']();
+}
+
 export function SaveCollection(arg1) {
   return window['go']['main']['App']['SaveCollection'](arg1);
 }

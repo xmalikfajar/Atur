@@ -156,6 +156,7 @@ export namespace requester {
 	    body: string;
 	    bodyType: string;
 	    formFields: FormField[];
+	    envVars: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -169,6 +170,7 @@ export namespace requester {
 	        this.body = source["body"];
 	        this.bodyType = source["bodyType"];
 	        this.formFields = this.convertValues(source["formFields"], FormField);
+	        this.envVars = source["envVars"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

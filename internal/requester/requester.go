@@ -10,12 +10,13 @@ import (
 
 // RequestPayload adalah data request yang dikirim dari frontend
 type RequestPayload struct {
-	Method  string            `json:"method"`
-	URL     string            `json:"url"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`    // untuk raw body (JSON, text)
-	BodyType string           `json:"bodyType"` // "raw", "form-data", "urlencoded", "none"
-	FormFields []FormField   `json:"formFields"` // untuk form-data & urlencoded
+	Method     string            `json:"method"`
+	URL        string            `json:"url"`
+	Headers    map[string]string `json:"headers"`
+	Body       string            `json:"body"`       // untuk raw body (JSON, text)
+	BodyType   string            `json:"bodyType"`   // "raw", "form-data", "urlencoded", "none"
+	FormFields []FormField       `json:"formFields"` // untuk form-data & urlencoded
+	EnvVars    map[string]string `json:"envVars"`    // environment variables aktif
 }
 
 // FormField merepresentasikan satu field pada form-data atau urlencoded
@@ -82,10 +83,19 @@ func Send(payload RequestPayload) Response {
 		req.Header.Set(key, val)
 	}
 
-	// Set Content-Type otomatis jika belum di-set manual
+	// Untuk form-data dan urlencoded, Content-Type HARUS selalu di-set
+	// karena multipart boundary unik per request dan harus match body.
+	// Untuk tipe lain, hanya set jika user belum menentukan.
 	if contentType != "" {
-		if _, exists := payload.Headers["Content-Type"]; !exists {
+		switch payload.BodyType {
+		case "form-data", "urlencoded":
+			// Selalu override — boundary multipart tidak bisa ditebak user
 			req.Header.Set("Content-Type", contentType)
+		default:
+			// Raw: hanya set jika belum ada
+			if req.Header.Get("Content-Type") == "" {
+				req.Header.Set("Content-Type", contentType)
+			}
 		}
 	}
 
@@ -126,6 +136,33 @@ func Send(payload RequestPayload) Response {
 		Duration:   duration,
 		Size:       len(respBody),
 	}
+}
+
+// SubstituteEnv mengganti semua placeholder {{key}} di URL, headers, dan body
+// dengan nilai dari map EnvVars pada payload
+func SubstituteEnv(payload RequestPayload) RequestPayload {
+	replace := func(s string) string {
+		for k, v := range payload.EnvVars {
+			s = strings.ReplaceAll(s, "{{"+k+"}}", v)
+		}
+		return s
+	}
+
+	payload.URL = replace(payload.URL)
+	payload.Body = replace(payload.Body)
+
+	newHeaders := make(map[string]string, len(payload.Headers))
+	for k, v := range payload.Headers {
+		newHeaders[replace(k)] = replace(v)
+	}
+	payload.Headers = newHeaders
+
+	for i, f := range payload.FormFields {
+		payload.FormFields[i].Key = replace(f.Key)
+		payload.FormFields[i].Value = replace(f.Value)
+	}
+
+	return payload
 }
 
 // buildURLEncoded membangun body untuk x-www-form-urlencoded
