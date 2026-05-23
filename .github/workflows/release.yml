@@ -165,8 +165,8 @@ jobs:
         if: matrix.build.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: "atur-windows-amd64-installer.exe"
-          path: build/bin/atur-windows-amd64-installer.exe
+          name: "atur-amd64-installer.exe"
+          path: build/bin/atur-amd64-installer.exe
 
   release:
     needs: build
@@ -199,7 +199,7 @@ jobs:
 
             | Tipe | File | Keterangan |
             |------|------|------------|
-            | 🔧 Installer | `atur-windows-amd64-installer.exe` | Install ke sistem, buat shortcut Desktop & Start Menu |
+            | 🔧 Installer | `atur-amd64-installer.exe` | Install ke sistem, buat shortcut Desktop & Start Menu |
             | 🚀 Portable | `atur-windows-amd64.exe` | Langsung klik, tidak perlu install |
 
             ### macOS
