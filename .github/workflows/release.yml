@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
@@ -14,20 +14,20 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'atur'
-            platform: 'linux/amd64'
-            os: 'ubuntu-22.04'
-            asset_name: 'atur-linux-amd64'
+          - name: "atur"
+            platform: "linux/amd64"
+            os: "ubuntu-22.04"
+            asset_name: "atur-linux-amd64"
 
-          - name: 'atur'
-            platform: 'windows/amd64'
-            os: 'windows-latest'
-            asset_name: 'atur-windows-amd64.exe'
+          - name: "atur"
+            platform: "windows/amd64"
+            os: "windows-latest"
+            asset_name: "atur-windows-amd64.exe"
 
-          - name: 'atur'
-            platform: 'darwin/universal'
-            os: 'macos-latest'
-            asset_name: 'atur-macos-universal'
+          - name: "atur"
+            platform: "darwin/universal"
+            os: "macos-latest"
+            asset_name: "atur-macos-universal"
 
     runs-on: ${{ matrix.build.os }}
 
@@ -40,12 +40,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: "1.21"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -66,14 +66,25 @@ jobs:
 
       - name: Build (Windows)
         if: matrix.build.os == 'windows-latest'
-        run: wails build -platform ${{ matrix.build.platform }} -o ${{ matrix.build.asset_name }}
+        run: |
+          wails build -platform ${{ matrix.build.platform }} -nsis -o atur-windows-amd64
+          # Wails -nsis menghasilkan:
+          #   build/bin/atur-windows-amd64.exe             → portable
+          #   build/bin/atur-windows-amd64-installer.exe   → installer NSIS
         shell: pwsh
 
-      - name: Upload artifact
+      - name: Upload artifact (Portable)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build.asset_name }}
           path: build/bin/${{ matrix.build.asset_name }}
+
+      - name: Upload artifact (Windows Installer)
+        if: matrix.build.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.asset_name }}-installer
+          path: build/bin/atur-windows-amd64-installer.exe
 
   release:
     needs: build
@@ -93,10 +104,20 @@ jobs:
           files: artifacts/*
           generate_release_notes: true
           body: |
-            ## Download
+            ## 📥 Download
 
-            | Platform | File |
-            |----------|------|
-            | Windows  | `atur-windows-amd64.exe` — langsung klik untuk menjalankan |
-            | macOS    | `atur-macos-universal` — klik kanan → Open |
-            | Linux    | `atur-linux-amd64` — `chmod +x atur-linux-amd64` lalu jalankan |
+            ### Windows
+            | Tipe | File | Keterangan |
+            |------|------|------------|
+            | 🔧 **Installer** | `atur-windows-amd64-installer.exe` | Install ke sistem, buat shortcut Desktop & Start Menu |
+            | 🚀 **Portable** | `atur-windows-amd64.exe` | Langsung klik, tidak perlu install |
+
+            ### macOS
+            | File | Keterangan |
+            |------|------------|
+            | `atur-macos-universal` | Klik kanan → Open (karena tidak di-notarize) |
+
+            ### Linux
+            | File | Keterangan |
+            |------|------------|
+            | `atur-linux-amd64` | `chmod +x atur-linux-amd64 && ./atur-linux-amd64` |

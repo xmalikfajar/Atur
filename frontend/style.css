@@ -105,9 +105,97 @@ ul {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+#sidebar.collapsed {
+  width: 48px;
+  min-width: 48px;
+}
+
+#sidebar.collapsed .sidebar-title-row .app-title,
+#sidebar.collapsed .sidebar-tab .tab-label,
+#sidebar.collapsed .panel-toolbar,
+#sidebar.collapsed #collection-list,
+#sidebar.collapsed #history-list {
+  display: none;
+}
+
+#sidebar.collapsed #sidebar-tabs {
+  flex-direction: column;
+  gap: 4px;
+}
+
+#sidebar.collapsed .sidebar-tab {
+  padding: 8px 4px;
+  font-size: 16px;
+  justify-content: center;
+  border-bottom: none;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+}
+
+#sidebar.collapsed .sidebar-tab.active {
+  border-left-color: var(--color-primary);
+  border-bottom: none;
 }
 
 #sidebar-header {
+  padding: 14px 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+#sidebar.collapsed #sidebar-header {
+  padding: 8px 4px 0;
+}
+
+.sidebar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+#sidebar.collapsed .sidebar-title-row {
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.btn-toggle-sidebar {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  padding: 4px 6px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: var(--radius);
+  transition: color var(--transition), background var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-toggle-sidebar:hover {
+  color: var(--color-primary);
+  background: var(--color-surface-2);
+}
+
+#sidebar.collapsed .btn-toggle-sidebar {
+  font-size: 20px;
+  padding: 2px 4px;
+}
+
+/* Ikon tab hanya terlihat saat collapsed */
+.sidebar-tab .tab-icon {
+  display: none;
+}
+
+#sidebar.collapsed .sidebar-tab .tab-icon {
+  display: inline;
+}
+
+#sidebar:not(.collapsed) .sidebar-tab .tab-icon {
+  margin-right: 4px;
+  display: inline;
+}
   padding: 14px 12px 0;
   border-bottom: 1px solid var(--color-border);
 }
@@ -370,8 +458,13 @@ ul {
   font-weight: 600;
 }
 
-#url-input {
+#url-input-wrapper {
   flex: 1;
+  position: relative;
+}
+
+#url-input {
+  width: 100%;
 }
 
 #btn-send {
@@ -608,8 +701,35 @@ ul {
   color: var(--color-primary);
 }
 
+/* Raw body toolbar */
+.raw-body-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 #raw-content-type {
-  width: 160px;
+  width: 140px;
+}
+
+.btn-format {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  padding: 5px 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition);
+}
+
+.btn-format:hover {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
 #raw-body-input {
@@ -1004,6 +1124,78 @@ ul {
 .method-OPTIONS {
   background: #94e2d5;
   color: #1e1e2e;
+}
+
+/* ===== Environment Variable Highlight ===== */
+
+/* Overlay layer untuk highlight {{var}} di URL input */
+.highlight-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.highlight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 11px;
+  color: transparent;
+  z-index: 1;
+  line-height: 1.4;
+}
+
+.highlight-layer mark.env-var-highlight {
+  background: rgba(124, 106, 247, 0.25); /* purple tint */
+  color: #c4b5fd;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: 0 -1px;
+}
+
+/* Input di atas layer highlight — teks transparan agar layer terlihat */
+.highlight-input-wrapper input {
+  position: relative;
+  z-index: 2;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  caret-color: var(--color-primary);
+}
+
+/* Badge indikator env vars di header value */
+.kv-row.has-env input.kv-value,
+.kv-row.has-env input.kv-key {
+  border-color: rgba(124, 106, 247, 0.4);
+  box-shadow: 0 0 0 1px rgba(124, 106, 247, 0.15);
+}
+
+/* Env var pill/counter */
+.env-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: rgba(124, 106, 247, 0.15);
+  border: 1px solid rgba(124, 106, 247, 0.3);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--color-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.env-indicator.hidden {
+  display: none;
+}
+
+/* Badge env di body textarea */
+.body-panel.has-env #raw-body-input {
+  border-color: rgba(124, 106, 247, 0.4);
+  box-shadow: 0 0 0 1px rgba(124, 106, 247, 0.15);
 }
 
 /* ===== Scrollbar ===== */

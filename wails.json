@@ -9,5 +9,18 @@
   "author": {
     "name": "Atur",
     "email": ""
+  },
+  "info": {
+    "companyName": "Atur",
+    "productName": "Atur",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2026 Atur",
+    "comments": "API Client Desktop ringan — alternatif Postman offline & gratis"
+  },
+  "nsis": {
+    "installDirectory": "$PROGRAMFILES\\Atur",
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Atur — API Client"
   }
 }
