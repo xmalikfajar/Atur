@@ -11,12 +11,25 @@
       <!-- Sidebar kiri: koleksi & history -->
       <aside id="sidebar">
         <div id="sidebar-header">
-          <span class="app-title">Atur</span>
+          <div class="sidebar-title-row">
+            <span class="app-title">Atur</span>
+            <button
+              id="btn-toggle-sidebar"
+              class="btn-toggle-sidebar"
+              title="Ciutkan sidebar"
+            >
+              ☰
+            </button>
+          </div>
           <div id="sidebar-tabs">
             <button class="sidebar-tab active" data-tab="collections">
-              Koleksi
+              <span class="tab-icon">📁</span>
+              <span class="tab-label">Koleksi</span>
             </button>
-            <button class="sidebar-tab" data-tab="history">History</button>
+            <button class="sidebar-tab" data-tab="history">
+              <span class="tab-icon">🕐</span>
+              <span class="tab-label">History</span>
+            </button>
           </div>
         </div>
 
@@ -25,6 +38,12 @@
           <div class="panel-toolbar">
             <button id="btn-new-collection" title="Koleksi Baru">
               + Koleksi
+            </button>
+            <button id="btn-export-collection" title="Export Koleksi">
+              📤
+            </button>
+            <button id="btn-import-collection" title="Import Koleksi">
+              📥
             </button>
           </div>
           <ul id="collection-list"></ul>
@@ -61,17 +80,29 @@
               <option value="HEAD">HEAD</option>
               <option value="OPTIONS">OPTIONS</option>
             </select>
-            <input
-              id="url-input"
-              type="text"
-              placeholder="https://api.example.com/endpoint"
-            />
+            <!-- URL input dengan highlight env vars -->
+            <div id="url-input-wrapper" class="highlight-input-wrapper">
+              <div
+                id="url-highlight-layer"
+                class="highlight-layer"
+                aria-hidden="true"
+              ></div>
+              <input
+                id="url-input"
+                type="text"
+                placeholder="https://api.example.com/endpoint"
+                autocomplete="off"
+              />
+            </div>
             <!-- Environment selector -->
             <select id="env-select" title="Pilih Environment">
               <option value="">— Tanpa Env —</option>
             </select>
             <button id="btn-manage-env" title="Kelola Environment">⚙</button>
             <button id="btn-send">Kirim</button>
+            <button id="btn-export-curl" title="Export sebagai curl command">
+              📋 cURL
+            </button>
           </div>
 
           <!-- Tab request: Headers, Body, Auth -->
@@ -111,11 +142,21 @@
 
             <!-- Raw body -->
             <div id="body-raw" class="body-panel">
-              <select id="raw-content-type">
-                <option value="application/json">JSON</option>
-                <option value="text/plain">Text</option>
-                <option value="application/xml">XML</option>
-              </select>
+              <div class="raw-body-toolbar">
+                <select id="raw-content-type">
+                  <option value="application/json">JSON</option>
+                  <option value="text/plain">Text</option>
+                  <option value="application/xml">XML</option>
+                  <option value="text/html">HTML</option>
+                </select>
+                <button
+                  id="btn-format-body"
+                  class="btn-format"
+                  title="Format / Beautify body"
+                >
+                  ✨ Format
+                </button>
+              </div>
               <textarea
                 id="raw-body-input"
                 placeholder='{"key": "value"}'
@@ -348,6 +389,131 @@
         <div class="modal-actions">
           <button id="btn-cancel-env" class="btn-secondary">Tutup</button>
           <button id="btn-save-env" class="btn-primary">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Curl Export/Import -->
+    <div id="modal-curl" class="modal hidden">
+      <div class="modal-box modal-box-wide">
+        <h3>cURL Export & Import</h3>
+
+        <!-- Tab: Export -->
+        <div
+          id="curl-tabs"
+          style="
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--color-border);
+          "
+        >
+          <button
+            id="curl-tab-export"
+            class="curl-tab active"
+            data-tab="export"
+            style="
+              flex: 1;
+              padding: 10px;
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: var(--color-primary);
+              border-bottom: 2px solid var(--color-primary);
+            "
+          >
+            Export
+          </button>
+          <button
+            id="curl-tab-import"
+            class="curl-tab"
+            data-tab="import"
+            style="
+              flex: 1;
+              padding: 10px;
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: var(--color-text-muted);
+            "
+          >
+            Import
+          </button>
+        </div>
+
+        <!-- Export Panel -->
+        <div id="curl-panel-export" class="curl-panel active">
+          <p
+            style="
+              font-size: 12px;
+              color: var(--color-text-muted);
+              margin-bottom: 10px;
+            "
+          >
+            Perintah curl di bawah dapat dijalankan di terminal untuk mengulangi
+            request ini.
+          </p>
+          <textarea
+            id="curl-output"
+            readonly
+            style="
+              width: 100%;
+              height: 150px;
+              padding: 10px;
+              background: var(--color-surface);
+              color: var(--color-text);
+              border: 1px solid var(--color-border);
+              font-family: monospace;
+              font-size: 12px;
+              border-radius: 4px;
+            "
+          ></textarea>
+          <button
+            id="btn-copy-curl"
+            class="btn-primary"
+            style="margin-top: 10px; width: 100%"
+          >
+            📋 Copy ke Clipboard
+          </button>
+        </div>
+
+        <!-- Import Panel -->
+        <div id="curl-panel-import" class="curl-panel hidden">
+          <p
+            style="
+              font-size: 12px;
+              color: var(--color-text-muted);
+              margin-bottom: 10px;
+            "
+          >
+            Tempel perintah curl di bawah untuk mengimpor request baru.
+          </p>
+          <textarea
+            id="curl-input"
+            placeholder="Tempel curl command di sini..."
+            style="
+              width: 100%;
+              height: 150px;
+              padding: 10px;
+              background: var(--color-surface);
+              color: var(--color-text);
+              border: 1px solid var(--color-border);
+              font-family: monospace;
+              font-size: 12px;
+              border-radius: 4px;
+            "
+          ></textarea>
+          <button
+            id="btn-import-curl"
+            class="btn-primary"
+            style="margin-top: 10px; width: 100%"
+          >
+            📥 Import Request
+          </button>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 15px">
+          <button id="btn-close-curl" class="btn-secondary">Tutup</button>
         </div>
       </div>
     </div>

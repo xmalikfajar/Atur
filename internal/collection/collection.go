@@ -221,3 +221,59 @@ func writeEnvironments(envs []Environment) error {
 
 	return os.WriteFile(path, data, 0644)
 }
+
+// --- Export/Import Collections ---
+
+// ExportCollection mengonversi koleksi menjadi JSON string
+func ExportCollection(col Collection) (string, error) {
+	data, err := json.MarshalIndent(col, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// ImportCollection mengimpor koleksi dari JSON string
+func ImportCollection(jsonData string) (Collection, error) {
+	var col Collection
+	err := json.Unmarshal([]byte(jsonData), &col)
+	return col, err
+}
+
+// ExportCollectionToFile menyimpan koleksi ke file JSON
+func ExportCollectionToFile(col Collection, filePath string) error {
+	data, err := json.MarshalIndent(col, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0644)
+}
+
+// ImportCollectionFromFile membaca koleksi dari file JSON
+func ImportCollectionFromFile(filePath string) (Collection, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return Collection{}, err
+	}
+	var col Collection
+	err = json.Unmarshal(data, &col)
+	return col, err
+}
+
+// --- Export/Import Multiple Collections ---
+
+// ExportCollections mengonversi slice koleksi menjadi JSON string
+func ExportCollections(cols []Collection) (string, error) {
+	data, err := json.MarshalIndent(cols, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// ImportCollections mengimpor slice koleksi dari JSON string
+func ImportCollections(jsonData string) ([]Collection, error) {
+	var cols []Collection
+	err := json.Unmarshal([]byte(jsonData), &cols)
+	return cols, err
+}

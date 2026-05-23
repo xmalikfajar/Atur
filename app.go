@@ -98,3 +98,80 @@ func (a *App) SaveEnvironment(env collection.Environment) error {
 func (a *App) DeleteEnvironment(id string) error {
 	return collection.DeleteEnvironment(id)
 }
+
+// --- Curl Export/Import ---
+
+// ExportToCurl mengonversi request menjadi perintah curl
+func (a *App) ExportToCurl(payload requester.RequestPayload) (string, error) {
+	// Substitusi environment variables jika ada
+	if len(payload.EnvVars) > 0 {
+		payload = requester.SubstituteEnv(payload)
+	}
+	return requester.ExportToCurl(payload)
+}
+
+// ImportFromCurl mengurai perintah curl dan mengembalikan request payload
+func (a *App) ImportFromCurl(curlCommand string) (requester.RequestPayload, error) {
+	return requester.ImportFromCurl(curlCommand)
+}
+
+// --- Collection Export/Import ---
+
+// ExportCollection mengonversi koleksi menjadi JSON string
+func (a *App) ExportCollection(col collection.Collection) (string, error) {
+	return collection.ExportCollection(col)
+}
+
+// ImportCollection mengimpor koleksi dari JSON string
+func (a *App) ImportCollection(jsonData string) (collection.Collection, error) {
+	return collection.ImportCollection(jsonData)
+}
+
+// ExportCollectionToFile menyimpan koleksi ke file JSON
+// Dibuka melalui native save dialog
+func (a *App) ExportCollectionToFile(col collection.Collection) error {
+	// Buka save dialog untuk memilih lokasi file
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Export Koleksi",
+		DefaultFilename: col.Name + ".json",
+	})
+	if err != nil {
+		return err
+	}
+
+	if path == "" {
+		// User membatalkan
+		return nil
+	}
+
+	return collection.ExportCollectionToFile(col, path)
+}
+
+// ImportCollectionFromFile membaca koleksi dari file JSON
+// Dibuka melalui native file open dialog
+func (a *App) ImportCollectionFromFile() (collection.Collection, error) {
+	// Buka file dialog untuk memilih file
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Import Koleksi",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "JSON Files (*.json)",
+				Pattern:     "*.json",
+			},
+			{
+				DisplayName: "All Files (*.*)",
+				Pattern:     "*.*",
+			},
+		},
+	})
+	if err != nil {
+		return collection.Collection{}, err
+	}
+
+	if path == "" {
+		// User membatalkan
+		return collection.Collection{}, nil
+	}
+
+	return collection.ImportCollectionFromFile(path)
+}

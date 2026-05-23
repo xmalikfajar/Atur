@@ -12,6 +12,9 @@ import {
 let activeEnvId = "";
 let allEnvironments = [];
 
+// Track koleksi yang dipilih saat ini (untuk export)
+let selectedCollection = null;
+
 /**
  * initCollection — Memuat dan merender koleksi, history, dan env saat startup
  */
@@ -29,7 +32,8 @@ export async function initCollection() {
 async function loadAndRenderCollections() {
   try {
     const collections = await window.go.main.App.GetCollections();
-    renderCollectionList(collections || [], (req) => {
+    renderCollectionList(collections || [], (req, collection) => {
+      selectedCollection = collection; // Track koleksi yang dipilih
       fillRequestForm(req);
     });
   } catch (err) {
@@ -357,4 +361,49 @@ function bindCollectionModal() {
 
 function escapeAttr(str) {
   return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// ===== Export/Import Collections =====
+
+/**
+ * exportSelectedCollection — Export koleksi yang saat ini dipilih
+ */
+export async function exportSelectedCollection() {
+  if (!selectedCollection) {
+    alert("Pilih koleksi terlebih dahulu untuk export.");
+    return;
+  }
+
+  try {
+    await window.go.main.App.ExportCollectionToFile(selectedCollection);
+    alert("Koleksi berhasil di-export!");
+  } catch (err) {
+    console.error("Gagal export koleksi:", err);
+    alert("Gagal export koleksi: " + String(err));
+  }
+}
+
+/**
+ * importCollectionFromFile — Import koleksi dari file
+ */
+export async function importCollectionFromFile() {
+  try {
+    const importedCol = await window.go.main.App.ImportCollectionFromFile();
+
+    // Check if user cancelled
+    if (!importedCol || !importedCol.id) {
+      return;
+    }
+
+    // Save koleksi yang diimpor
+    await window.go.main.App.SaveCollection(importedCol);
+
+    // Reload koleksi list
+    await loadAndRenderCollections();
+
+    alert(`Koleksi "${importedCol.name}" berhasil di-import!`);
+  } catch (err) {
+    console.error("Gagal import koleksi:", err);
+    alert("Gagal import koleksi: " + String(err));
+  }
 }
