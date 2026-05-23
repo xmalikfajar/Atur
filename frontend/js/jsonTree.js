@@ -66,7 +66,7 @@ function containerNode(key, obj, depth, openBracket, closeBracket) {
   const label = Array.isArray(obj) ? `Array[${count}]` : `Object{${count}}`;
 
   const details = document.createElement("details");
-  details.open = depth < 2; // auto-expand 2 level pertama
+  details.open = depth < 1; // auto-expand hanya root object/array
   details.style.marginLeft = depth * 16 + "px";
 
   const summary = document.createElement("summary");

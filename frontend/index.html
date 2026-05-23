@@ -112,7 +112,13 @@
             <button class="req-tab" data-tab="path">Path</button>
             <button class="req-tab" data-tab="body">Body</button>
             <button class="req-tab" data-tab="auth">Auth</button>
-            <button id="btn-collapse-request" class="btn-collapse-request" title="Ciutkan / Buka request panel">▼</button>
+            <button
+              id="btn-collapse-request"
+              class="btn-collapse-request"
+              title="Ciutkan / Buka request panel"
+            >
+              ▼
+            </button>
           </div>
 
           <!-- Panel Headers -->
@@ -129,7 +135,9 @@
               <button id="btn-add-param">+ Tambah Param</button>
             </div>
             <div id="params-list" class="kv-list"></div>
-            <p class="panel-hint">Query parameter otomatis ditambahkan ke URL saat kirim request.</p>
+            <p class="panel-hint">
+              Query parameter otomatis ditambahkan ke URL saat kirim request.
+            </p>
           </div>
 
           <!-- Panel Path Variables -->
@@ -138,7 +146,10 @@
               <button id="btn-add-path-var">+ Tambah Path Var</button>
             </div>
             <div id="path-list" class="kv-list"></div>
-            <p class="panel-hint">Gunakan <code>:nama</code> atau <code>{{nama}}</code> di URL, lalu isi nilainya di sini.</p>
+            <p class="panel-hint">
+              Gunakan <code>:nama</code> atau <code>{{nama}}</code> di URL, lalu
+              isi nilainya di sini.
+            </p>
           </div>
 
           <!-- Panel Body -->
@@ -315,7 +326,13 @@
           <div id="response-tabs" class="hidden">
             <button class="resp-tab active" data-tab="body">Body</button>
             <button class="resp-tab" data-tab="headers">Headers</button>
-            <button id="btn-toggle-tree" class="btn-toggle-tree" title="Toggle JSON tree / raw">🌳</button>
+            <button
+              id="btn-toggle-tree"
+              class="btn-toggle-tree active"
+              title="Tampilkan raw text"
+            >
+              🌳
+            </button>
           </div>
 
           <div id="resp-panel-body" class="resp-panel active">

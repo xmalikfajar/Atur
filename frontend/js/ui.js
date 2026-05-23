@@ -6,8 +6,9 @@
 import { addKVRow, addFileRow } from "./main.js";
 import { renderJSONTree } from "./jsonTree.js";
 
-// State: tree mode aktif?
-let treeMode = false;
+// State: tree mode aktif? (default: on untuk JSON)
+let treeMode = true;
+let lastResponseBody = null; // simpan response body terakhir untuk re-render tree
 
 /**
  * initUI — Inisialisasi tampilan awal
@@ -77,6 +78,8 @@ export function renderResponse(response) {
 
   // Body response — raw text atau tree
   const bodyText = tryFormatJSON(response.body);
+  lastResponseBody = response.body; // simpan untuk re-render saat toggle
+
   if (treeMode && isJSON(response.body)) {
     bodyEl.classList.add("hidden");
     treeEl.classList.remove("hidden");
@@ -285,13 +288,20 @@ export function toggleTreeMode() {
     btn.title = treeMode ? "Tampilkan raw text" : "Tampilkan JSON tree";
   }
 
-  // Toggle visibility untuk response yang sudah ditampilkan
-  if (bodyEl && treeEl) {
-    if (treeMode && treeEl.children.length > 0) {
+  if (!bodyEl || !treeEl) return;
+
+  if (treeMode) {
+    // Render ulang tree dari response body terakhir
+    if (lastResponseBody && isJSON(lastResponseBody)) {
       bodyEl.classList.add("hidden");
       treeEl.classList.remove("hidden");
-    } else if (!treeMode && bodyEl.textContent) {
+      renderJSONTree(lastResponseBody, treeEl);
+    }
+  } else {
+    // Kembali ke raw text
+    if (lastResponseBody) {
       bodyEl.classList.remove("hidden");
+      bodyEl.textContent = tryFormatJSON(lastResponseBody);
       treeEl.classList.add("hidden");
     }
   }
