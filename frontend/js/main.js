@@ -3,7 +3,7 @@
  * Menginisialisasi semua modul dan event listener utama
  */
 
-import { initUI, switchSidebarTab } from "./ui.js";
+import { initUI, switchSidebarTab, toggleTreeMode } from "./ui.js";
 import { sendRequest } from "./request.js";
 import {
   initCollection,
@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initCollection();
   bindEvents();
   initSidebarToggle();
+  initDividerDrag();
   initTabs({
     getState: getDOMState,
     setState: setDOMState,
@@ -106,6 +107,28 @@ function bindEvents() {
   document.getElementById("btn-add-header").addEventListener("click", () => {
     addKVRow("headers-list");
   });
+
+  // Tombol tambah param
+  document.getElementById("btn-add-param").addEventListener("click", () => {
+    addKVRow("params-list");
+  });
+
+  // Tombol tambah path var
+  document.getElementById("btn-add-path-var").addEventListener("click", () => {
+    addKVRow("path-list");
+  });
+
+  // Toggle JSON tree / raw
+  document
+    .getElementById("btn-toggle-tree")
+    .addEventListener("click", toggleTreeMode);
+
+  // Collapse/expand request section
+  document
+    .getElementById("btn-collapse-request")
+    .addEventListener("click", () => {
+      document.getElementById("request-section").classList.toggle("collapsed");
+    });
 
   // Tombol tambah field form-data
   document
@@ -224,12 +247,15 @@ function bindEvents() {
  */
 async function handleSend() {
   const method = document.getElementById("method-select").value;
-  const url = document.getElementById("url-input").value.trim();
+  let url = document.getElementById("url-input").value.trim();
 
   if (!url) {
     alert("URL tidak boleh kosong.");
     return;
   }
+
+  // Bangun URL final: ganti path vars + tambah query params
+  url = buildFinalURL(url);
 
   const headers = collectKVRows("headers-list");
 
@@ -890,4 +916,56 @@ function formatXML(text) {
   }
 
   return formatted.trimStart();
+}
+
+// ===== URL Builder (Params + Path Vars) =====
+function buildFinalURL(rawURL) {
+  let url = rawURL;
+  const pathVars = collectKVRows("path-list");
+  for (const [key, value] of Object.entries(pathVars)) {
+    url = url.replaceAll(":" + key, encodeURIComponent(value));
+    url = url.replaceAll("{{" + key + "}}", encodeURIComponent(value));
+  }
+  const params = collectKVRows("params-list");
+  const paramEntries = Object.entries(params).filter(([, v]) => v !== "");
+  if (paramEntries.length > 0) {
+    const qs = paramEntries
+      .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
+      .join("&");
+    url += (url.includes("?") ? "&" : "?") + qs;
+  }
+  return url;
+}
+
+// ===== Divider Drag =====
+export function initDividerDrag() {
+  const divider = document.getElementById("divider");
+  const reqSec = document.getElementById("request-section");
+  if (!divider || !reqSec) return;
+  let dragging = false,
+    startY = 0,
+    startH = 0;
+  divider.addEventListener("mousedown", (e) => {
+    dragging = true;
+    divider.classList.add("dragging");
+    startY = e.clientY;
+    startH = reqSec.offsetHeight;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+    e.preventDefault();
+  });
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const h = Math.max(80, Math.min(600, startH + e.clientY - startY));
+    reqSec.style.height = h + "px";
+    reqSec.style.flex = "none";
+    reqSec.style.minHeight = "auto";
+  });
+  document.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    divider.classList.remove("dragging");
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  });
 }

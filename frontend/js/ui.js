@@ -4,6 +4,10 @@
  */
 
 import { addKVRow, addFileRow } from "./main.js";
+import { renderJSONTree } from "./jsonTree.js";
+
+// State: tree mode aktif?
+let treeMode = false;
 
 /**
  * initUI — Inisialisasi tampilan awal
@@ -38,6 +42,7 @@ export function renderResponse(response) {
   const tabsEl = document.getElementById("response-tabs");
   const placeholder = document.getElementById("response-placeholder");
   const bodyEl = document.getElementById("response-body");
+  const treeEl = document.getElementById("response-tree");
   const headersBody = document.getElementById("response-headers-body");
   const statusEl = document.getElementById("resp-status");
   const durationEl = document.getElementById("resp-duration");
@@ -47,7 +52,6 @@ export function renderResponse(response) {
   metaEl.classList.remove("hidden");
   tabsEl.classList.remove("hidden");
   placeholder.classList.add("hidden");
-  bodyEl.classList.remove("hidden");
 
   if (response.error) {
     // Tampilkan error
@@ -55,7 +59,9 @@ export function renderResponse(response) {
     statusEl.className = "badge badge-5xx";
     durationEl.textContent = response.duration ? `${response.duration} ms` : "";
     sizeEl.textContent = "";
+    bodyEl.classList.remove("hidden");
     bodyEl.textContent = response.error;
+    treeEl.classList.add("hidden");
     headersBody.innerHTML = "";
     return;
   }
@@ -69,9 +75,17 @@ export function renderResponse(response) {
   durationEl.textContent = `${response.duration} ms`;
   sizeEl.textContent = formatSize(response.size);
 
-  // Body response — coba format JSON
+  // Body response — raw text atau tree
   const bodyText = tryFormatJSON(response.body);
-  bodyEl.textContent = bodyText;
+  if (treeMode && isJSON(response.body)) {
+    bodyEl.classList.add("hidden");
+    treeEl.classList.remove("hidden");
+    renderJSONTree(response.body, treeEl);
+  } else {
+    bodyEl.classList.remove("hidden");
+    bodyEl.textContent = bodyText;
+    treeEl.classList.add("hidden");
+  }
 
   // Headers response
   headersBody.innerHTML = "";
@@ -243,4 +257,42 @@ function escapeHTML(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * isJSON — Cek apakah string adalah JSON valid
+ */
+function isJSON(text) {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * toggleTreeMode — Toggle antara raw text dan JSON tree view
+ */
+export function toggleTreeMode() {
+  treeMode = !treeMode;
+  const btn = document.getElementById("btn-toggle-tree");
+  const bodyEl = document.getElementById("response-body");
+  const treeEl = document.getElementById("response-tree");
+
+  if (btn) {
+    btn.classList.toggle("active", treeMode);
+    btn.title = treeMode ? "Tampilkan raw text" : "Tampilkan JSON tree";
+  }
+
+  // Toggle visibility untuk response yang sudah ditampilkan
+  if (bodyEl && treeEl) {
+    if (treeMode && treeEl.children.length > 0) {
+      bodyEl.classList.add("hidden");
+      treeEl.classList.remove("hidden");
+    } else if (!treeMode && bodyEl.textContent) {
+      bodyEl.classList.remove("hidden");
+      treeEl.classList.add("hidden");
+    }
+  }
 }

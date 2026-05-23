@@ -1218,3 +1218,42 @@ ul {
 .hidden {
   display: none !important;
 }
+
+/* ===== Panel Hint ===== */
+.panel-hint { font-size: 11px; color: var(--color-text-muted); padding: 8px 0 0; }
+.panel-hint code { font-family: var(--font-mono); color: var(--color-primary); background: var(--color-surface-2); padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+
+/* ===== Request Collapse ===== */
+.btn-collapse-request { margin-left: auto; background: transparent; color: var(--color-text-muted); border: none; padding: 8px 12px; font-size: 12px; transition: transform 0.2s ease, color var(--transition); flex-shrink: 0; }
+.btn-collapse-request:hover { color: var(--color-primary); }
+#request-section.collapsed .btn-collapse-request { transform: rotate(180deg); }
+#request-section.collapsed .req-panel,
+#request-section.collapsed #request-tabs .req-tab { display: none; }
+#request-section.collapsed #request-tabs { border-bottom: none; min-height: auto; }
+#request-section.collapsed { min-height: auto; flex: 0 0 auto; }
+
+/* ===== Draggable Divider ===== */
+#divider { height: 5px; background: var(--color-border); cursor: row-resize; flex-shrink: 0; position: relative; transition: background 0.15s; }
+#divider:hover, #divider.dragging { background: var(--color-primary); }
+#divider::after { content: ""; position: absolute; inset: -3px 0; }
+
+/* ===== JSON Tree ===== */
+.json-tree { font-family: var(--font-mono); font-size: 13px; line-height: 1.6; overflow: auto; padding: 8px 0; }
+.json-tree details { margin: 0; }
+.json-tree summary { cursor: pointer; list-style: none; padding: 2px 4px; border-radius: 3px; transition: background 0.1s; }
+.json-tree summary:hover { background: var(--color-surface-2); }
+.json-tree summary::-webkit-details-marker { display: none; }
+.json-tree .tree-toggle { display: inline-block; width: 14px; font-size: 10px; color: var(--color-text-muted); user-select: none; transition: transform 0.15s; }
+.json-tree details[open] > summary > .tree-toggle { transform: rotate(90deg); }
+.json-tree .tree-key { color: var(--color-info); }
+.json-tree .tree-key::after { content: ": "; color: var(--color-text-muted); }
+.json-tree .tree-string { color: var(--color-success); }
+.json-tree .tree-number { color: var(--color-warning); }
+.json-tree .tree-boolean { color: var(--color-primary); font-weight: 600; }
+.json-tree .tree-null { color: var(--color-text-muted); font-style: italic; }
+.json-tree .tree-bracket { color: var(--color-text-muted); }
+.json-tree .tree-count { color: var(--color-text-muted); font-size: 11px; margin-left: 4px; }
+
+/* Toggle tree/raw */
+.btn-toggle-tree { margin-left: auto; background: transparent; color: var(--color-text-muted); border: none; padding: 8px 10px; font-size: 14px; transition: color var(--transition); flex-shrink: 0; }
+.btn-toggle-tree:hover, .btn-toggle-tree.active { color: var(--color-primary); }

@@ -105,11 +105,14 @@
             </button>
           </div>
 
-          <!-- Tab request: Headers, Body, Auth -->
+          <!-- Tab request: Params, Headers, Body, Auth -->
           <div id="request-tabs">
             <button class="req-tab active" data-tab="headers">Headers</button>
+            <button class="req-tab" data-tab="params">Params</button>
+            <button class="req-tab" data-tab="path">Path</button>
             <button class="req-tab" data-tab="body">Body</button>
             <button class="req-tab" data-tab="auth">Auth</button>
+            <button id="btn-collapse-request" class="btn-collapse-request" title="Ciutkan / Buka request panel">▼</button>
           </div>
 
           <!-- Panel Headers -->
@@ -118,6 +121,24 @@
               <button id="btn-add-header">+ Tambah Header</button>
             </div>
             <div id="headers-list" class="kv-list"></div>
+          </div>
+
+          <!-- Panel Params (Query String) -->
+          <div id="req-panel-params" class="req-panel">
+            <div class="kv-toolbar">
+              <button id="btn-add-param">+ Tambah Param</button>
+            </div>
+            <div id="params-list" class="kv-list"></div>
+            <p class="panel-hint">Query parameter otomatis ditambahkan ke URL saat kirim request.</p>
+          </div>
+
+          <!-- Panel Path Variables -->
+          <div id="req-panel-path" class="req-panel">
+            <div class="kv-toolbar">
+              <button id="btn-add-path-var">+ Tambah Path Var</button>
+            </div>
+            <div id="path-list" class="kv-list"></div>
+            <p class="panel-hint">Gunakan <code>:nama</code> atau <code>{{nama}}</code> di URL, lalu isi nilainya di sini.</p>
           </div>
 
           <!-- Panel Body -->
@@ -294,6 +315,7 @@
           <div id="response-tabs" class="hidden">
             <button class="resp-tab active" data-tab="body">Body</button>
             <button class="resp-tab" data-tab="headers">Headers</button>
+            <button id="btn-toggle-tree" class="btn-toggle-tree" title="Toggle JSON tree / raw">🌳</button>
           </div>
 
           <div id="resp-panel-body" class="resp-panel active">
@@ -301,6 +323,7 @@
               <p>Kirim request untuk melihat response di sini.</p>
             </div>
             <pre id="response-body" class="hidden"></pre>
+            <div id="response-tree" class="hidden json-tree"></div>
           </div>
 
           <div id="resp-panel-headers" class="resp-panel hidden">

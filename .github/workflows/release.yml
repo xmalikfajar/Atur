@@ -107,6 +107,14 @@ jobs:
             -nsis `
             -o atur-windows-amd64
 
+      - name: Rename Windows portable executable
+        if: matrix.build.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Rename-Item `
+            build/bin/atur-windows-amd64 `
+            atur-windows-amd64.exe
+
       # =========================
       # DEBUG OUTPUT
       # =========================
