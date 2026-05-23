@@ -19,8 +19,8 @@ func main() {
 	// Jalankan aplikasi Wails
 	err := wails.Run(&options.App{
 		Title:     "Atur — API Client",
-		Width:     1200,
-		Height:    800,
+		Width:     890,
+		Height:    500,
 		Frameless: false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,

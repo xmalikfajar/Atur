@@ -27,7 +27,7 @@ jobs:
           - name: "atur"
             platform: "darwin/universal"
             os: "macos-latest"
-            asset_name: "atur-macos-universal"
+            asset_name: "atur-macos-universal.zip"
 
     runs-on: ${{ matrix.build.os }}
 
@@ -62,83 +62,149 @@ jobs:
 
       - name: Install NSIS (Windows)
         if: matrix.build.os == 'windows-latest'
-        run: choco install nsis -y --no-progress
         shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          echo 'C:\Program Files (x86)\NSIS' >> $env:GITHUB_PATH
 
+      # =========================
+      # BUILD LINUX
+      # =========================
       - name: Build (Linux)
         if: matrix.build.os == 'ubuntu-22.04'
-        run: wails build -platform ${{ matrix.build.platform }} -o ${{ matrix.build.asset_name }}
+        run: |
+          wails build \
+            -platform ${{ matrix.build.platform }} \
+            -o atur-linux-amd64
 
+      # =========================
+      # BUILD macOS
+      # =========================
       - name: Build (macOS)
         if: matrix.build.os == 'macos-latest'
-        run: wails build -platform ${{ matrix.build.platform }} -s -o ${{ matrix.build.asset_name }}
+        run: |
+          wails build \
+            -platform ${{ matrix.build.platform }} \
+            -s
 
+          mv 'build/bin/Atur.app' 'build/bin/atur-macos-universal.app'
+
+      - name: Zip macOS app
+        if: matrix.build.os == 'macos-latest'
+        run: |
+          cd build/bin
+          zip -r atur-macos-universal.zip atur-macos-universal.app
+
+      # =========================
+      # BUILD WINDOWS
+      # =========================
       - name: Build (Windows)
         if: matrix.build.os == 'windows-latest'
-        run: |
-          wails build -platform ${{ matrix.build.platform }} -nsis -o atur-windows-amd64
         shell: pwsh
+        run: |
+          wails build `
+            -platform ${{ matrix.build.platform }} `
+            -nsis `
+            -o atur-windows-amd64
 
+      # =========================
+      # DEBUG OUTPUT
+      # =========================
+      - name: Debug Linux output
+        if: matrix.build.os == 'ubuntu-22.04'
+        run: |
+          echo '=== Linux build/bin ==='
+          ls -R build/bin
+
+      - name: Debug macOS output
+        if: matrix.build.os == 'macos-latest'
+        run: |
+          echo '=== macOS build/bin ==='
+          ls -R build/bin
+
+      - name: Debug Windows output
+        if: matrix.build.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host '=== Windows build/bin ==='
+          Get-ChildItem -Recurse build/bin
+
+      # =========================
+      # UPLOAD ARTIFACTS
+      # =========================
       - name: Upload artifact (Linux)
         if: matrix.build.os == 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.asset_name }}
-          path: build/bin/${{ matrix.build.asset_name }}
+          name: "atur-linux-amd64"
+          path: build/bin/atur-linux-amd64
 
       - name: Upload artifact (macOS)
         if: matrix.build.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.asset_name }}
-          path: build/bin/${{ matrix.build.asset_name }}
+          name: "atur-macos-universal.zip"
+          path: build/bin/atur-macos-universal.zip
 
       - name: Upload artifact (Windows Portable)
         if: matrix.build.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.asset_name }}
-          path: build/bin/${{ matrix.build.asset_name }}
+          name: "atur-windows-amd64.exe"
+          path: build/bin/atur-windows-amd64.exe
 
       - name: Upload artifact (Windows Installer)
         if: matrix.build.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.asset_name }}-installer
+          name: "atur-windows-amd64-installer.exe"
           path: build/bin/atur-windows-amd64-installer.exe
 
   release:
     needs: build
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
           path: artifacts/
           merge-multiple: true
 
-      - name: Buat Release
+      - name: Debug downloaded artifacts
+        run: |
+          echo '=== Downloaded artifacts ==='
+          ls -R artifacts
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
+          files: artifacts/**
           generate_release_notes: true
           body: |
             ## 📥 Download
 
             ### Windows
+
             | Tipe | File | Keterangan |
             |------|------|------------|
-            | 🔧 **Installer** | `atur-windows-amd64-installer.exe` | Install ke sistem, buat shortcut Desktop & Start Menu |
-            | 🚀 **Portable** | `atur-windows-amd64.exe` | Langsung klik, tidak perlu install |
+            | 🔧 Installer | `atur-windows-amd64-installer.exe` | Install ke sistem, buat shortcut Desktop & Start Menu |
+            | 🚀 Portable | `atur-windows-amd64.exe` | Langsung klik, tidak perlu install |
 
             ### macOS
+
             | File | Keterangan |
             |------|------------|
-            | `atur-macos-universal` | Klik kanan → Open (karena tidak di-notarize) |
+            | `atur-macos-universal.zip` | Extract lalu buka `atur-macos-universal.app` |
 
             ### Linux
+
             | File | Keterangan |
             |------|------------|
             | `atur-linux-amd64` | `chmod +x atur-linux-amd64 && ./atur-linux-amd64` |
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
