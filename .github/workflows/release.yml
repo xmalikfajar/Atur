@@ -60,20 +60,41 @@ jobs:
             build-essential \
             pkg-config
 
-      - name: Build (Linux & macOS)
-        if: matrix.build.os != 'windows-latest'
+      - name: Install NSIS (Windows)
+        if: matrix.build.os == 'windows-latest'
+        run: choco install nsis -y --no-progress
+        shell: pwsh
+
+      - name: Build (Linux)
+        if: matrix.build.os == 'ubuntu-22.04'
         run: wails build -platform ${{ matrix.build.platform }} -o ${{ matrix.build.asset_name }}
+
+      - name: Build (macOS)
+        if: matrix.build.os == 'macos-latest'
+        run: wails build -platform ${{ matrix.build.platform }} -s -o ${{ matrix.build.asset_name }}
 
       - name: Build (Windows)
         if: matrix.build.os == 'windows-latest'
         run: |
           wails build -platform ${{ matrix.build.platform }} -nsis -o atur-windows-amd64
-          # Wails -nsis menghasilkan:
-          #   build/bin/atur-windows-amd64.exe             → portable
-          #   build/bin/atur-windows-amd64-installer.exe   → installer NSIS
         shell: pwsh
 
-      - name: Upload artifact (Portable)
+      - name: Upload artifact (Linux)
+        if: matrix.build.os == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.asset_name }}
+          path: build/bin/${{ matrix.build.asset_name }}
+
+      - name: Upload artifact (macOS)
+        if: matrix.build.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.asset_name }}
+          path: build/bin/${{ matrix.build.asset_name }}
+
+      - name: Upload artifact (Windows Portable)
+        if: matrix.build.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build.asset_name }}
